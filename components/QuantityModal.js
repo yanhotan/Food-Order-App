@@ -1,12 +1,15 @@
-import React, { useState } from 'react';
-import { View, Text, Modal, TouchableOpacity, StyleSheet, Button } from 'react-native';
+import React from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Modal } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
-const QuantityModal = ({ visible, onClose, product, onAddToCart }) => {
-  const [quantity, setQuantity] = useState(1);
+export default function QuantityModal({ visible, onClose, product, onAddToCart }) {
+  const [quantity, setQuantity] = React.useState(1);
 
   const handleAddToCart = () => {
-    onAddToCart(product, quantity);
-    onClose();
+    if (product) {
+      onAddToCart(product, quantity);
+      setQuantity(1); // Reset quantity after adding to cart
+    }
   };
 
   return (
@@ -18,20 +21,26 @@ const QuantityModal = ({ visible, onClose, product, onAddToCart }) => {
     >
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
-          <Text style={styles.productName}>{product?.name}</Text>
-          <Text style={styles.productPrice}>
-            RM{product?.price ? (product.price * quantity).toFixed(2) : '0.00'}
-          </Text>
+          <Text style={styles.modalTitle}>{product?.name}</Text>
+          <Text style={styles.modalPrice}>RM{product?.price.toFixed(2)}</Text>
           <View style={styles.quantityContainer}>
-            <TouchableOpacity onPress={() => setQuantity(Math.max(1, quantity - 1))} style={styles.button}>
-              <Text style={styles.buttonText}>-</Text>
+            <TouchableOpacity
+              onPress={() => setQuantity(quantity > 1 ? quantity - 1 : 1)}
+              style={styles.quantityButton}
+            >
+              <Ionicons name="remove" size={20} color="#000" />
             </TouchableOpacity>
-            <Text style={styles.quantityText}>{quantity}</Text>
-            <TouchableOpacity onPress={() => setQuantity(quantity + 1)} style={styles.button}>
-              <Text style={styles.buttonText}>+</Text>
+            <Text style={styles.quantity}>{quantity}</Text>
+            <TouchableOpacity
+              onPress={() => setQuantity(quantity + 1)}
+              style={styles.quantityButton}
+            >
+              <Ionicons name="add" size={20} color="#000" />
             </TouchableOpacity>
           </View>
-          <Button title="Add to Cart" onPress={handleAddToCart} />
+          <TouchableOpacity style={styles.addToCartButton} onPress={handleAddToCart}>
+            <Text style={styles.addToCartButtonText}>ADD TO CART</Text>
+          </TouchableOpacity>
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
             <Text style={styles.closeButtonText}>Close</Text>
           </TouchableOpacity>
@@ -39,29 +48,33 @@ const QuantityModal = ({ visible, onClose, product, onAddToCart }) => {
       </View>
     </Modal>
   );
-};
+}
 
 const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
   },
   modalContent: {
-    width: 300,
+    width: '80%',
+    backgroundColor: '#1C1C1C',
     padding: 20,
-    backgroundColor: '#fff',
     borderRadius: 10,
     alignItems: 'center',
   },
-  productName: {
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFD700',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  modalPrice: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  productPrice: {
-    fontSize: 16,
+    color: '#FFD700',
     marginBottom: 20,
   },
   quantityContainer: {
@@ -69,28 +82,41 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
-  button: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: '#ddd',
-    justifyContent: 'center',
+  quantityButton: {
+    backgroundColor: '#FFD700',
+    padding: 10,
+    borderRadius: 5,
     alignItems: 'center',
-    marginHorizontal: 10,
+    justifyContent: 'center',
   },
-  buttonText: {
-    fontSize: 18,
+  quantity: {
+    fontSize: 16,
+    color: '#FFD700',
+    marginHorizontal: 15,
+  },
+  addToCartButton: {
+    backgroundColor: '#FFD700',
+    paddingVertical: 10,
+    width: '70%', // Make both buttons the same width
+    borderRadius: 10,
+    marginBottom: 10,
+    alignItems: 'center',
+  },
+  addToCartButtonText: {
     fontWeight: 'bold',
-  },
-  quantityText: {
+    color: '#000',
     fontSize: 16,
   },
   closeButton: {
-    marginTop: 10,
+    backgroundColor: '#333',
+    paddingVertical: 10,
+    width: '70%', // Same width as ADD TO CART button
+    borderRadius: 10,
+    alignItems: 'center',
   },
   closeButtonText: {
-    color: 'blue',
+    fontWeight: 'bold',
+    color: '#FFD700',
+    fontSize: 16,
   },
 });
-
-export default QuantityModal;

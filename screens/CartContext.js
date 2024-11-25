@@ -1,50 +1,55 @@
-import React, { createContext, useState,useContext} from 'react';
+import React, { createContext, useContext, useState } from 'react';
 
-// Create a Cart Context
 export const CartContext = createContext();
 
-// Create a Cart Provider component
-export const CartProvider = ({ children }) => {
+export function CartProvider({ children }) {
   const [cartItems, setCartItems] = useState([]);
+  const [orderHistory, setOrderHistory] = useState([]);
 
   const addToCart = (product, quantity) => {
-    const existingItem = cartItems.find(item => item.id === product.id);
-
-    let updatedCartItems;
-    if (existingItem) {
-      // Update the quantity of the existing item
-      updatedCartItems = cartItems.map(item =>
-        item.id === product.id
-          ? { ...item, quantity: item.quantity + quantity }
-          : item
-      );
-    } else {
-      // Add new item to the cart
-      updatedCartItems = [...cartItems, { ...product, quantity }];
-    }
-
-    setCartItems(updatedCartItems);
-  };
-
-  const updateQuantity = (id, quantityChange) => {
-    setCartItems(cartItems.map(item =>
-      item.id === id ? { ...item, quantity: Math.max(item.quantity + quantityChange, 1) } : item
-    ));
-  };
-
-  const removeFromCart = (id) => {
-    setCartItems(cartItems.filter(item => item.id !== id));
+    setCartItems((prev) => {
+      const existingItem = prev.find((item) => item.id === product.id);
+      if (existingItem) {
+        return prev.map((item) =>
+          item.id === product.id
+            ? { ...item, quantity: item.quantity + quantity }
+            : item
+        );
+      }
+      return [...prev, { ...product, quantity }];
+    });
   };
 
   const clearCart = () => {
     setCartItems([]);
   };
 
+  const checkoutCart = () => {
+    if (cartItems.length > 0) {
+      const order = {
+        id: Math.random().toString(36).substr(2, 9),
+        date: new Date().toISOString().split('T')[0],
+        total: cartItems.reduce((total, item) => total + item.price * item.quantity, 0),
+        status: 'Pending',
+      };
+      setOrderHistory((prev) => [order, ...prev]);
+      clearCart();
+    }
+  };
+
   return (
-    <CartContext.Provider value={{ cartItems, addToCart, updateQuantity, removeFromCart, clearCart }}>
+    <CartContext.Provider
+      value={{
+        cartItems,
+        orderHistory,
+        addToCart,
+        clearCart,
+        checkoutCart,
+      }}
+    >
       {children}
     </CartContext.Provider>
   );
-};
+}
 
 export const useCart = () => useContext(CartContext);

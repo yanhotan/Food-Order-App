@@ -1,4 +1,3 @@
-
 import * as React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -6,26 +5,23 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 
 import { CartProvider } from './screens/CartContext';
-
 import HomeScreen from './screens/HomeScreen';
-import ShopScreen from './screens/ShopScreen';
-import ProfileScreen from './screens/ProfileScreen';
+import OrderHistoryScreen from './screens/OrderHistoryScreen';
 import CategoryItems from './screens/CategoryItems';
 import CartScreen from './screens/CartScreen';
 
 const Tab = createBottomTabNavigator();
 const ShopStack = createStackNavigator();
 
+// ShopStack for managing category navigation
 function ShopStackScreen() {
   return (
     <ShopStack.Navigator>
       <ShopStack.Screen
-        name="Shop"
-        component={ShopScreen}
-        options={{ headerShown: false }} // Hide the header for the ShopScreen
+        name="CategoryItems"
+        component={CategoryItems}
+        options={{ headerShown: false }}
       />
-      <ShopStack.Screen name="CategoryItems" component={CategoryItems}
-        options={{ headerShown: false }} />
     </ShopStack.Navigator>
   );
 }
@@ -36,24 +32,35 @@ export default function App() {
       <NavigationContainer>
         <Tab.Navigator
           screenOptions={({ route }) => ({
-            tabBarIcon: ({ color, size }) => {
+            tabBarIcon: ({ focused, color, size }) => {
               let iconName;
 
-              if (route.name === 'Home') {
-                iconName = 'home';
+              if (route.name === 'Menu') {
+                iconName = focused ? 'menu' : 'menu-outline';
               } else if (route.name === 'Cart') {
-                iconName = 'cart';
-              } else if (route.name === 'Profile') {
-                iconName = 'person';
+                iconName = focused ? 'cart' : 'cart-outline';
+              } else if (route.name === 'Order History') {
+                iconName = focused ? 'document-text' : 'document-text-outline';
               }
 
               return <Ionicons name={iconName} size={size} color={color} />;
             },
+            tabBarActiveTintColor: '#FFD700',
+            tabBarInactiveTintColor: '#fff',
+            tabBarStyle: {
+              backgroundColor: '#000',
+            },
+            headerStyle: {
+              backgroundColor: '#000',
+            },
+            headerTitleStyle: {
+              color: '#FFD700',
+            },
           })}
         >
-          <Tab.Screen name="Home" component={HomeScreen} />
+          <Tab.Screen name="Menu" component={HomeScreen} />
           <Tab.Screen name="Cart" component={CartScreen} />
-          <Tab.Screen name="Profile" component={ProfileScreen} />
+          <Tab.Screen name="Order History" component={OrderHistoryScreen} />
         </Tab.Navigator>
       </NavigationContainer>
     </CartProvider>

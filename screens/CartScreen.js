@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, Image, FlatList, StyleSheet, Dimensions, TouchableOpacity, Modal } from 'react-native'; // Import Modal here
+import React, { useState } from 'react';
+import { View, Text, Image, FlatList, StyleSheet, Dimensions, TouchableOpacity, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Swipeable, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useCart } from './CartContext';
@@ -7,17 +7,23 @@ import { useCart } from './CartContext';
 const screenWidth = Dimensions.get('window').width;
 
 export default function CartScreen() {
-  const { cartItems, updateQuantity, removeFromCart } = useCart();
+  const { cartItems, updateQuantity, removeFromCart, clearCart } = useCart();
   const [isPaymentModalVisible, setPaymentModalVisible] = useState(false);
 
   const calculateTotal = () => {
     const subtotal = cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
-    const sst = subtotal * 0.06; // 6% SST
+    const sst = subtotal * 0.06;
     const total = subtotal + sst;
     return { subtotal, sst, total };
   };
 
   const { subtotal, sst, total } = calculateTotal();
+
+  const handleCheckout = () => {
+    alert('Your order has been placed. Pay at the counter.');
+    clearCart();
+    setPaymentModalVisible(false);
+  };
 
   const renderItem = ({ item }) => (
     <Swipeable
@@ -26,7 +32,7 @@ export default function CartScreen() {
           <Ionicons name="trash" size={24} color="#fff" />
         </TouchableOpacity>
       )}
-      overshootRight={false} // Prevent overshoot animation
+      overshootRight={false}
     >
       <View style={styles.itemContainer}>
         <Image source={item.image} style={styles.image} />
@@ -55,23 +61,16 @@ export default function CartScreen() {
         renderItem={renderItem}
         contentContainerStyle={styles.itemsContainer}
       />
-
-      {/* Footer for Total Price and Checkout */}
       <View style={styles.footer}>
         <View style={styles.totalContainer}>
           <Text style={styles.totalText}>Subtotal: RM{subtotal.toFixed(2)}</Text>
           <Text style={styles.totalText}>SST (6%): RM{sst.toFixed(2)}</Text>
           <Text style={styles.totalTextBold}>Total: RM{total.toFixed(2)}</Text>
         </View>
-        <TouchableOpacity
-          style={styles.checkoutButton}
-          onPress={() => setPaymentModalVisible(true)}
-        >
+        <TouchableOpacity style={styles.checkoutButton} onPress={() => setPaymentModalVisible(true)}>
           <Text style={styles.checkoutButtonText}>Checkout</Text>
         </TouchableOpacity>
       </View>
-
-      {/* Payment Modal */}
       <Modal
         transparent={true}
         visible={isPaymentModalVisible}
@@ -81,14 +80,8 @@ export default function CartScreen() {
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Choose Payment Method</Text>
-            <TouchableOpacity style={styles.paymentButton} onPress={() => alert('Pay at Counter')}>
-              <Text style={styles.paymentButtonText}>Pay at Counter</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.paymentButton} onPress={() => alert('E-Wallet')}>
-              <Text style={styles.paymentButtonText}>E-Wallet</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.paymentButton} onPress={() => alert('FPX Online Payment')}>
-              <Text style={styles.paymentButtonText}>FPX Online Payment</Text>
+            <TouchableOpacity style={styles.paymentButton} onPress={handleCheckout}>
+              <Text style={styles.paymentButtonText}>Pay Later at Counter</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => setPaymentModalVisible(false)} style={styles.cancelButton}>
               <Text style={styles.cancelButtonText}>Cancel</Text>
@@ -100,21 +93,19 @@ export default function CartScreen() {
   );
 }
 
-// Styles...
-
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 10,
+    backgroundColor: '#000',
   },
   itemsContainer: {
-    paddingBottom: 150, // Space for the footer
+    paddingBottom: 150,
   },
   itemContainer: {
     flexDirection: 'row',
     padding: 10,
-    backgroundColor: '#fff',
+    backgroundColor: '#1C1C1C',
     borderRadius: 8,
     marginBottom: 10,
     alignItems: 'center',
@@ -123,7 +114,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     marginRight: 10,
-    backgroundColor: '#e0e0e0',
+    backgroundColor: '#333',
   },
   details: {
     flex: 1,
@@ -132,12 +123,13 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 16,
     fontWeight: 'bold',
+    color: '#fff',
     marginBottom: 5,
   },
   price: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#FFD700',
     marginBottom: 5,
   },
   quantityContainer: {
@@ -146,15 +138,16 @@ const styles = StyleSheet.create({
   },
   quantity: {
     fontSize: 16,
+    color: '#fff',
     paddingHorizontal: 10,
   },
   quantityButton: {
-    backgroundColor: '#FF6B6B',
+    backgroundColor: '#FFD700',
     padding: 5,
     borderRadius: 5,
   },
   trashButton: {
-    backgroundColor: '#FF6B6B',
+    backgroundColor: '#FFD700',
     justifyContent: 'center',
     alignItems: 'center',
     height: '100%',
@@ -165,9 +158,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     width: '100%',
-    backgroundColor: '#fff',
+    backgroundColor: '#1C1C1C',
     padding: 20,
-    borderTopColor: '#e0e0e0',
+    borderTopColor: '#333',
     borderTopWidth: 1,
   },
   totalContainer: {
@@ -175,20 +168,22 @@ const styles = StyleSheet.create({
   },
   totalText: {
     fontSize: 16,
+    color: '#fff',
     marginBottom: 5,
   },
   totalTextBold: {
     fontSize: 18,
     fontWeight: 'bold',
+    color: '#FFD700',
   },
   checkoutButton: {
-    backgroundColor: '#FF6B6B',
+    backgroundColor: '#FFD700',
     padding: 15,
     borderRadius: 10,
     alignItems: 'center',
   },
   checkoutButtonText: {
-    color: '#fff',
+    color: '#000',
     fontSize: 18,
     fontWeight: 'bold',
   },
@@ -200,36 +195,37 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     width: '80%',
-    backgroundColor: '#fff',
+    backgroundColor: '#1C1C1C',
     padding: 20,
     borderRadius: 10,
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
+    color: '#fff',
     marginBottom: 20,
     textAlign: 'center',
   },
   paymentButton: {
-    backgroundColor: '#FF6B6B',
+    backgroundColor: '#FFD700',
     padding: 15,
     borderRadius: 10,
     alignItems: 'center',
     marginBottom: 10,
   },
   paymentButtonText: {
-    color: '#fff',
+    color: '#000',
     fontSize: 16,
     fontWeight: 'bold',
   },
   cancelButton: {
-    backgroundColor: '#e0e0e0',
+    backgroundColor: '#333',
     padding: 15,
     borderRadius: 10,
     alignItems: 'center',
   },
   cancelButtonText: {
-    color: '#333',
+    color: '#FFD700',
     fontSize: 16,
   },
 });

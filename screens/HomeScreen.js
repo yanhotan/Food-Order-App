@@ -1,11 +1,10 @@
-import React, { useState, useContext } from 'react';
-import { View, Text, Image, FlatList, StyleSheet, Dimensions, TextInput, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useContext, useRef } from 'react';
+import { View, Text, Image, FlatList, StyleSheet, Dimensions, TextInput, TouchableOpacity, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import QuantityModal from '../components/QuantityModal';
 import { useNavigation } from '@react-navigation/native';
-import { CartContext } from './CartContext'; // Import CartContext
+import { CartContext } from './CartContext';
 
-// Categories and Items Structure (example)
 const categories = {
   "Best Seller": [
     { id: '1', name: 'Chirashi Don', image: require('../assets/Best Seller/Chirashi Don.jpg'), price: 16.96 },
@@ -27,7 +26,6 @@ const categories = {
     { id: '11', name: 'Tempura Moriawase', image: require('../assets/Tempura/Tempura Moriawase.jpg'), price: 18.0 },
   ],
   "Value Sushi": [
-    // Add items here if available
     { id: '12', name: 'Value Sushi A', image: require('../assets/Value Sushi/Value Sushi A.jpg'), price: 18.0 },
     { id: '13', name: 'Value Sushi B', image: require('../assets/Value Sushi/Value Sushi B.jpg'), price: 18.0 },
     { id: '14', name: 'Value Sushi C', image: require('../assets/Value Sushi/Value Sushi C.jpg'), price: 18.0 },
@@ -41,16 +39,21 @@ const categories = {
   ],
 };
 
-
-const screenWidth = Dimensions.get('window').width;
-
 export default function HomeScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('Best Seller'); // Default category
-  const { addToCart } = useContext(CartContext); // Get addToCart function from CartContext
+  const [selectedCategory, setSelectedCategory] = useState('Best Seller'); 
+  const { addToCart } = useContext(CartContext); 
   const navigation = useNavigation();
+  const flatListRef = useRef();
+
+  const categoryKeys = Object.keys(categories);
+
+  // Flatten all items for FlatList
+  const allItems = categoryKeys.flatMap(category =>
+    categories[category].map(item => ({ ...item, category }))
+  );
 
   const handleProductPress = (product) => {
     setSelectedProduct(product);
@@ -58,45 +61,57 @@ export default function HomeScreen() {
   };
 
   const handleAddToCart = (product, quantity) => {
-    addToCart(product, quantity); // Use the addToCart from context
+    addToCart(product, quantity);
     setModalVisible(false);
   };
 
-  // Filter items based on category and search query
-  const filteredItems = categories[selectedCategory].filter(item =>
-    item.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const scrollToCategory = (category) => {
+    const firstIndex = allItems.findIndex(item => item.category === category);
+    if (firstIndex !== -1) {
+      flatListRef.current.scrollToIndex({ index: firstIndex, animated: true });
+    }
+  };
+
+  const onViewableItemsChanged = ({ viewableItems }) => {
+    if (viewableItems.length > 0) {
+      const visibleCategory = viewableItems[0].item.category;
+      setSelectedCategory(visibleCategory);
+    }
+  };
+
+  const viewabilityConfig = {
+    itemVisiblePercentThreshold: 50,
+  };
 
   const renderItem = ({ item }) => (
-    <TouchableOpacity onPress={() => handleProductPress(item)}>
-      <View style={styles.itemContainer}>
-        <Image source={item.image} style={styles.image} />
-        <Text style={styles.name}>{item.name}</Text>
-        <Text style={styles.price}>RM{item.price.toFixed(2)}</Text>
-        <TouchableOpacity onPress={() => handleProductPress(item)} style={styles.cartButton}>
-          <Ionicons name="cart" size={24} color="#000" />
-        </TouchableOpacity>
-      </View>
-    </TouchableOpacity>
+    <View style={styles.itemContainer}>
+      <Image source={item.image} style={styles.image} />
+      <Text style={styles.name}>{item.name}</Text>
+      <Text style={styles.price}>RM{item.price.toFixed(2)}</Text>
+      <TouchableOpacity onPress={() => handleProductPress(item)} style={styles.cartButton}>
+        <Ionicons name="cart" size={24} color="#000" />
+      </TouchableOpacity>
+    </View>
   );
 
   return (
-    <ScrollView style={styles.container}>
+    <View style={styles.container}>
       <TextInput
         style={styles.searchBar}
         placeholder="Search for food..."
+        placeholderTextColor="#FFD700"
         value={searchQuery}
         onChangeText={(text) => setSearchQuery(text)}
       />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryContainer}>
-        {Object.keys(categories).map(category => (
+        {categoryKeys.map(category => (
           <TouchableOpacity
             key={category}
             style={[
               styles.categoryButton,
               selectedCategory === category && styles.selectedCategoryButton,
             ]}
-            onPress={() => setSelectedCategory(category)}
+            onPress={() => scrollToCategory(category)}
           >
             <Text
               style={[
@@ -110,11 +125,14 @@ export default function HomeScreen() {
         ))}
       </ScrollView>
       <FlatList
-        data={filteredItems}
-        numColumns={2}
+        ref={flatListRef}
+        data={allItems}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
+        onViewableItemsChanged={onViewableItemsChanged}
+        viewabilityConfig={viewabilityConfig}
         contentContainerStyle={styles.itemsContainer}
+        numColumns={2}
       />
       <QuantityModal
         visible={modalVisible}
@@ -122,25 +140,25 @@ export default function HomeScreen() {
         product={selectedProduct}
         onAddToCart={handleAddToCart}
       />
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#000',
     padding: 10,
-    backgroundColor: '#000', // Black background
   },
   searchBar: {
     height: 40,
-    borderColor: '#FFD700', // Yellow border
+    borderColor: '#FFD700',
     borderWidth: 1,
     borderRadius: 20,
     paddingHorizontal: 15,
     marginBottom: 10,
-    backgroundColor: '#1C1C1C', // Dark background for search bar
-    color: '#FFD700', // Yellow text
+    backgroundColor: '#1C1C1C',
+    color: '#FFD700',
   },
   categoryContainer: {
     flexDirection: 'row',
@@ -151,17 +169,18 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     marginRight: 10,
     borderRadius: 20,
-    backgroundColor: '#1C1C1C', // Dark background for unselected button
+    backgroundColor: '#1C1C1C',
   },
   selectedCategoryButton: {
-    backgroundColor: '#8B0000', // Blackish-red for selected category
+    backgroundColor: '#8B0000',
   },
   categoryButtonText: {
     fontSize: 14,
-    color: '#FFD700', // Yellow text
+    color: '#FFD700',
   },
   selectedCategoryButtonText: {
-    color: '#FFD700', // Yellow text for selected category
+    color: '#FFD700',
+    fontWeight: 'bold',
   },
   itemsContainer: {
     paddingHorizontal: 5,
@@ -171,7 +190,7 @@ const styles = StyleSheet.create({
     margin: 5,
     padding: 10,
     borderRadius: 8,
-    backgroundColor: '#1C1C1C', // Dark background for items
+    backgroundColor: '#1C1C1C',
     alignItems: 'center',
   },
   image: {
@@ -184,17 +203,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     textAlign: 'center',
-    color: '#FFD700', // Yellow text
+    color: '#FFD700',
   },
   price: {
     fontSize: 16,
     fontWeight: 'bold',
     marginVertical: 5,
-    color: '#FFD700', // Yellow price
+    color: '#FFD700',
   },
   cartButton: {
     marginTop: 5,
-    backgroundColor: '#FFD700', // Yellow button
+    backgroundColor: '#FFD700',
     borderRadius: 20,
     padding: 5,
   },
