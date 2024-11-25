@@ -7,8 +7,9 @@ import { useCart } from './CartContext';
 const screenWidth = Dimensions.get('window').width;
 
 export default function CartScreen() {
-  const { cartItems, updateQuantity, removeFromCart, clearCart } = useCart();
+  const { cartItems, updateQuantity, removeFromCart, checkoutCart } = useCart();
   const [isPaymentModalVisible, setPaymentModalVisible] = useState(false);
+  const [isAlertVisible, setAlertVisible] = useState(false);
 
   const calculateTotal = () => {
     const subtotal = cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
@@ -20,9 +21,9 @@ export default function CartScreen() {
   const { subtotal, sst, total } = calculateTotal();
 
   const handleCheckout = () => {
-    alert('Your order has been placed. Pay at the counter.');
-    clearCart();
+    checkoutCart(); // Call checkoutCart from CartContext
     setPaymentModalVisible(false);
+    setAlertVisible(true); // Show custom alert
   };
 
   const renderItem = ({ item }) => (
@@ -71,6 +72,8 @@ export default function CartScreen() {
           <Text style={styles.checkoutButtonText}>Checkout</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Payment Modal */}
       <Modal
         transparent={true}
         visible={isPaymentModalVisible}
@@ -85,6 +88,24 @@ export default function CartScreen() {
             </TouchableOpacity>
             <TouchableOpacity onPress={() => setPaymentModalVisible(false)} style={styles.cancelButton}>
               <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Custom Alert Modal */}
+      <Modal
+        transparent={true}
+        visible={isAlertVisible}
+        animationType="fade"
+        onRequestClose={() => setAlertVisible(false)}
+      >
+        <View style={styles.alertContainer}>
+          <View style={styles.alertContent}>
+            <Text style={styles.alertTitle}>Info</Text>
+            <Text style={styles.alertMessage}>Your order has been placed.</Text>
+            <TouchableOpacity style={styles.alertButton} onPress={() => setAlertVisible(false)}>
+              <Text style={styles.alertButtonText}>OK</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -227,5 +248,41 @@ const styles = StyleSheet.create({
   cancelButtonText: {
     color: '#FFD700',
     fontSize: 16,
+  },
+  alertContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+  },
+  alertContent: {
+    width: '80%',
+    backgroundColor: '#1C1C1C',
+    padding: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  alertTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFD700',
+    marginBottom: 10,
+  },
+  alertMessage: {
+    fontSize: 16,
+    color: '#fff',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  alertButton: {
+    backgroundColor: '#FFD700',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+  },
+  alertButtonText: {
+    color: '#000',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
