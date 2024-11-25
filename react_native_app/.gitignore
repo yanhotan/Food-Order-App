@@ -3,10 +3,26 @@
 # dependencies
 node_modules/
 
+# anroid
+android/.gradle/
+android/app/build/
+android/build/
+android/.idea/
+android/local.properties
+android/.settings/
+*.iml
+.gradle/
+*.apk
+*.keystore
+
 # Expo
 .expo/
-dist/
+.expo-shared/
 web-build/
+.cache/
+dist/
+expo-shell-app/
+*.tar.gz
 
 # Native
 *.orig.*
